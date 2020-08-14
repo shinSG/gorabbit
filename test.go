@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go_rabbit/gorabbit"
+	"gorabbit/gorabbit"
 )
 
 func main() {
@@ -19,6 +19,8 @@ func main() {
 	rc := new(gorabbit.RabbitClient)
 	rc.Init(conf)
 	rc.CreateQueue("test", "", "", false, false, false, false)
+	// rc.DeleteQueue("test", false, false, false)
 	rc.GetQueues("")
+	// rc.Close()
 	// fmt.Println(string(data))
 }

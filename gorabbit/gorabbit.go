@@ -49,7 +49,21 @@ func (rc *RabbitClient) Init(conf map[string]string) {
 	rc.AmqpConn = conn
 	rc.HTTPConn = GetHTTPClient(conf)
 	rc.ch, err = rc.AmqpConn.Channel()
+	// runtime.SetFinalizer(rc, func(rc *RabbitClient) { rc.Close() })
 }
+
+// Close close all connection
+func (rc *RabbitClient) Close() {
+	fmt.Println("Start close connection")
+	rc.ch.Close()
+	rc.AmqpConn.Close()
+	rc.HTTPConn.Client.CloseIdleConnections()
+	fmt.Println("All Closed!!!")
+}
+
+// func (rc *RabbitClient) reconnect() {
+// 	if rc.ch.
+// }
 
 // CreateQueue xxx
 func (rc *RabbitClient) CreateQueue(name, key, exchange string, durable, autoDelete, exclusive, noWait bool) amqp.Queue {
@@ -61,6 +75,15 @@ func (rc *RabbitClient) CreateQueue(name, key, exchange string, durable, autoDel
 		rc.ch.QueueBind(name, key, exchange, noWait, nil)
 	}
 	return queue
+}
+
+// DeleteQueue del queue
+func (rc *RabbitClient) DeleteQueue(name string, ifUnused, ifEmpty, noWait bool) {
+	MsgNo, err := rc.ch.QueueDelete(name, ifUnused, ifEmpty, noWait)
+	if err != nil {
+		Log(err, "Create Queue Error")
+	}
+	fmt.Println(MsgNo)
 }
 
 // CreateExchange create an exchange
@@ -103,6 +126,10 @@ func (rc *RabbitClient) GetExchanges(name string) {
 	body := GetRespBody(resp)
 	fmt.Println(body)
 }
+
+// func (rc *RabbitClient) Disconnect() {
+// 	rc.ch.Disconnect()
+// }
 
 // // Do send http request
 // func (rc *RabbitClient) Do(method string, url string, body io.Reader) (*http.Response, error) {
