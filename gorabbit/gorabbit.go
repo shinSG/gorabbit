@@ -1,10 +1,12 @@
 package gorabbit
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/streadway/amqp"
 )
@@ -90,7 +92,7 @@ func (rc *RabbitClient) DeleteQueue(name string, ifUnused, ifEmpty, noWait bool)
 func (rc *RabbitClient) CreateExchange(name, kind string, durable, autoDelete, internal, noWait bool) bool {
 	err := rc.ch.ExchangeDeclare(name, kind, durable, autoDelete, internal, noWait, nil)
 	if err != nil {
-		Log(err, "Create Queue Error")
+		Log(err, "Create Exchange Error")
 		return false
 	}
 	return true
@@ -105,26 +107,48 @@ func GetRespBody(resp *http.Response) string {
 	return string(cont)
 }
 
-// GetQueues get queue list
-func (rc *RabbitClient) GetQueues(name string) {
-	url := rc.BaseURL + URLDict["queue"]
-	if name != "" {
-		url = url + "/" + name
+// Que queue
+type Que interface{}
+
+// GetQueueByName get queue list
+func (rc *RabbitClient) GetQueueByName(vhost, name string) map[string]interface{} {
+	reqURL := rc.BaseURL + URLDict["queue"]
+	if vhost != "" {
+		vhost = url.QueryEscape(vhost)
+		reqURL = reqURL + "/" + vhost
 	}
-	resp, _ := rc.HTTPConn.Get(url)
-	body := GetRespBody(resp)
-	fmt.Println(body)
+	if name != "" {
+		reqURL = reqURL + "/" + name
+	}
+	resp, err := rc.HTTPConn.Get(reqURL)
+	if err != nil {
+		fmt.Println(err)
+	}
+	data, _ := ioutil.ReadAll(resp.Body)
+	var queueList map[string]interface{}
+	// if name == "" {
+	// 	queueList := make([]map[string]interface{}, 0)
+	// } else {
+	// 	queueList := make(map[string]interface{})
+	// }
+	loadErr := json.Unmarshal(data, &queueList)
+	if loadErr != nil {
+		queueList = make(map[string]interface{}, 0)
+	}
+	return queueList
 }
 
 //GetExchanges get exchange list
 func (rc *RabbitClient) GetExchanges(name string) {
-	url := rc.BaseURL + URLDict["queue"]
+	url := rc.BaseURL + URLDict["exchange"]
 	if name != "" {
 		url = url + "/" + name
 	}
 	resp, _ := rc.HTTPConn.Get(url)
-	body := GetRespBody(resp)
-	fmt.Println(body)
+	data, _ := ioutil.ReadAll(resp.Body)
+	q := new(Que)
+	json.Unmarshal(data, &q)
+	fmt.Print(q)
 }
 
 // func (rc *RabbitClient) Disconnect() {

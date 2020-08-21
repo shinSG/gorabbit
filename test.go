@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gorabbit/gorabbit"
 )
 
@@ -18,9 +19,12 @@ func main() {
 	// data, _ := ioutil.ReadAll(resp.Body)
 	rc := new(gorabbit.RabbitClient)
 	rc.Init(conf)
-	rc.CreateQueue("test", "", "", false, false, false, false)
+	// rc.CreateQueue("test", "", "", false, false, false, false)
 	// rc.DeleteQueue("test", false, false, false)
-	rc.GetQueues("")
+	// queues := rc.GetQueues("/", "test")
+	queues := rc.GetQueues("/", "")
+	fmt.Println(queues)
+	// fmt.Println(queues[0]["name"])
 	// rc.Close()
 	// fmt.Println(string(data))
 }
